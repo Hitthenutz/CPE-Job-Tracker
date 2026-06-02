@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CPE Career Tracker</title>
+  <title>DevPipeline</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">CT</div>
+        <div class="brand-mark">DP</div>
         <div>
-          <h1>CPE Tracker</h1>
-          <p>Career pipeline</p>
+          <h1>DevPipeline</h1>
+          <p>Opportunity CRM</p>
         </div>
       </div>
       <nav class="nav">
-        <button class="nav-item active" type="button" data-view="applications">Applications</button>
+        <button class="nav-item active" type="button" data-view="applications">Pipeline</button>
         <button class="nav-item" type="button" data-view="contacts">Contacts</button>
       </nav>
       <div class="sidebar-card">
@@ -29,8 +29,8 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Computer engineering career search</p>
-          <h2>Applications</h2>
+          <p class="eyebrow">Software engineering opportunity pipeline</p>
+          <h2>Pipeline</h2>
         </div>
         <div class="actions">
           <button class="icon-button" type="button" id="exportBtn" title="Export data" aria-label="Export data">
@@ -40,11 +40,11 @@
             <span aria-hidden="true">⇧</span>
           </label>
           <input id="importFile" type="file" accept="application/json" hidden>
-          <button class="primary-button" type="button" id="newApplicationBtn">Add Application</button>
+          <button class="primary-button" type="button" id="newApplicationBtn">Add Opportunity</button>
         </div>
       </header>
 
-      <section class="stats-grid" aria-label="Application metrics">
+      <section class="stats-grid" aria-label="Pipeline metrics">
         <article class="metric">
           <span>Total</span>
           <strong id="totalCount">0</strong>
@@ -71,7 +71,7 @@
         <div class="toolbar">
           <label class="search-box">
             <span>Search</span>
-            <input id="searchInput" type="search" placeholder="Company, role, location...">
+            <input id="searchInput" type="search" placeholder="Company, position, location...">
           </label>
           <label>
             <span>Status</span>
@@ -98,7 +98,7 @@
             <thead>
               <tr>
                 <th>Company</th>
-                <th>Role</th>
+                <th>Position</th>
                 <th>Status</th>
                 <th>Priority</th>
                 <th>Mode</th>
@@ -118,15 +118,15 @@
       <form id="applicationForm">
         <div class="panel-header">
           <div>
-            <p class="eyebrow">Application detail</p>
-            <h3 id="formTitle">Add application</h3>
+            <p class="eyebrow">Opportunity detail</p>
+            <h3 id="formTitle">Add opportunity</h3>
           </div>
           <button class="icon-button" type="button" id="clearFormBtn" title="Clear form" aria-label="Clear form">×</button>
         </div>
 
         <input type="hidden" id="applicationId">
         <label>Company<input id="company" required></label>
-        <label>Role<input id="role" required></label>
+        <label>Position<input id="role" required></label>
         <div class="two-col">
           <label>Type<select id="type"></select></label>
           <label>Priority<select id="priority"></select></label>
@@ -151,7 +151,7 @@
           <label>Compensation<input id="compensation"></label>
         </div>
         <label>Notes<textarea id="notes" rows="4"></textarea></label>
-        <button class="primary-button full" type="submit">Save Application</button>
+        <button class="primary-button full" type="submit">Save Opportunity</button>
       </form>
     </aside>
   </div>

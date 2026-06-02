@@ -1,6 +1,6 @@
-# CPE Career Tracker
+# DevPipeline
 
-A MongoDB-backed web app for tracking computer engineering internships and job applications.
+A MongoDB-backed opportunity pipeline for software engineering internships and job applications.
 
 ## Project Structure
 
@@ -67,8 +67,8 @@ The server binds to `0.0.0.0` automatically in production unless `HOST` is set.
 ## Features
 
 - Dashboard counts for total, active, interviews, offers, and due-soon follow-ups
-- Application table with search and filters
-- Add, edit, delete, and open application links
+- Opportunity pipeline table with search and filters
+- Add, edit, delete, and open opportunity links
 - MongoDB database storage
 - JSON import and export
 

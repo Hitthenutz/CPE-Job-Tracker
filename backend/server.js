@@ -160,7 +160,7 @@ function applySecurityHeaders(res) {
 async function start() {
   await connectDb();
   server.listen(config.port, config.host, () => {
-    console.log(`CPE Career Tracker running at http://${config.host}:${config.port}`);
+    console.log(`DevPipeline running at http://${config.host}:${config.port}`);
   });
 }
 

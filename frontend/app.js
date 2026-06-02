@@ -40,7 +40,7 @@ const fields = [
 }, {});
 
 async function loadApplications() {
-  setTableMessage("Loading applications...");
+  setTableMessage("Loading pipeline...");
   applications = await requestJson(API_URL);
   render();
 }
@@ -98,7 +98,7 @@ function renderApplications() {
   const visible = getFilteredApplications();
 
   if (!visible.length) {
-    setTableMessage("No applications match this view.");
+    setTableMessage("No opportunities match this view.");
     return;
   }
 
@@ -110,7 +110,7 @@ function renderApplications() {
       </td>
       <td class="role-cell">
         <strong>${escapeHtml(app.role)}</strong>
-        <span>${escapeHtml(app.type || "Application")}</span>
+        <span>${escapeHtml(app.type || "Opportunity")}</span>
       </td>
       <td><span class="pill status-${statusClass(app.status)}">${escapeHtml(app.status)}</span></td>
       <td><span class="pill priority-${escapeHtml(app.priority)}">${escapeHtml(app.priority)}</span></td>
@@ -170,7 +170,7 @@ function clearForm() {
   fields.status.value = "Not Started";
   fields.mode.value = "Hybrid";
   fields.referral.value = "No";
-  els.formTitle.textContent = "Add application";
+  els.formTitle.textContent = "Add opportunity";
 }
 
 function editApplication(id) {
@@ -194,7 +194,7 @@ function editApplication(id) {
   fields.followUpDate.value = app.followUpDate || "";
   fields.compensation.value = app.compensation || "";
   fields.notes.value = app.notes || "";
-  els.formTitle.textContent = "Edit application";
+  els.formTitle.textContent = "Edit opportunity";
 }
 
 async function handleSubmit(event) {
@@ -242,7 +242,7 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "cpe-career-tracker.json";
+  link.download = "devpipeline-export.json";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -321,7 +321,7 @@ function escapeHtml(value) {
 setupOptions();
 clearForm();
 loadApplications().catch((error) => {
-  setTableMessage(`Could not load applications: ${error.message}`);
+  setTableMessage(`Could not load pipeline: ${error.message}`);
 });
 
 els.searchInput.addEventListener("input", renderApplications);

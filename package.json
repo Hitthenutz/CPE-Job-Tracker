@@ -1,5 +1,5 @@
 {
-  "name": "cpe-career-tracker",
+  "name": "devpipeline",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,6 @@
   "dependencies": {
     "mongodb": "^6.21.0"
   },
-  "description": "A database-backed web app for tracking CPE internships and job applications.",
+  "description": "A MongoDB-backed opportunity pipeline for software engineering applications.",
   "license": "MIT"
 }
