@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DevPipeline</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=contacts-ui">
 </head>
 <body>
   <div class="app-shell">
@@ -29,22 +29,24 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Software engineering opportunity pipeline</p>
-          <h2>Pipeline</h2>
+          <p class="eyebrow" id="viewEyebrow">Software engineering opportunity pipeline</p>
+          <h2 id="viewTitle">Pipeline</h2>
         </div>
         <div class="actions">
-          <button class="icon-button" type="button" id="exportBtn" title="Export data" aria-label="Export data">
+          <button class="utility-button" type="button" id="exportBtn">
             <span aria-hidden="true">↓</span>
+            Export
           </button>
-          <label class="icon-button" for="importFile" title="Import data" aria-label="Import data">
+          <label class="utility-button" for="importFile">
             <span aria-hidden="true">↑</span>
+            Import
           </label>
           <input id="importFile" type="file" accept="application/json" hidden>
           <button class="primary-button" type="button" id="newApplicationBtn">Add Opportunity</button>
         </div>
       </header>
 
-      <section class="stats-grid" aria-label="Pipeline metrics">
+      <section class="stats-grid" aria-label="Pipeline metrics" data-view-panel="applications">
         <article class="metric">
           <span>Total</span>
           <strong id="totalCount">0</strong>
@@ -67,7 +69,7 @@
         </article>
       </section>
 
-      <section class="workspace">
+      <section class="workspace" data-view-panel="applications">
         <div class="toolbar">
           <label class="search-box">
             <span>Search</span>
@@ -111,6 +113,17 @@
             <tbody id="applicationsBody"></tbody>
           </table>
         </div>
+      </section>
+
+      <section class="workspace contacts-workspace hidden" data-view-panel="contacts">
+        <div class="contacts-header">
+          <div>
+            <p class="eyebrow">Network intelligence</p>
+            <h3>Contacts</h3>
+          </div>
+          <p>Contacts are generated from opportunity records that include a contact name.</p>
+        </div>
+        <div class="contacts-grid" id="contactsGrid"></div>
       </section>
     </main>
 
@@ -161,6 +174,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=contacts-ui"></script>
 </body>
 </html>

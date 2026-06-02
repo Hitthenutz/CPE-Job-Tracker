@@ -12,6 +12,11 @@ let applications = [];
 
 const els = {
   applicationsBody: document.querySelector("#applicationsBody"),
+  contactsGrid: document.querySelector("#contactsGrid"),
+  navItems: document.querySelectorAll(".nav-item"),
+  viewPanels: document.querySelectorAll("[data-view-panel]"),
+  viewEyebrow: document.querySelector("#viewEyebrow"),
+  viewTitle: document.querySelector("#viewTitle"),
   searchInput: document.querySelector("#searchInput"),
   statusFilter: document.querySelector("#statusFilter"),
   priorityFilter: document.querySelector("#priorityFilter"),
@@ -164,6 +169,7 @@ function renderMetrics() {
 function render() {
   renderMetrics();
   renderApplications();
+  renderContacts();
 }
 
 function clearForm() {
@@ -323,6 +329,62 @@ function showToast(message) {
   }, 2400);
 }
 
+function renderContacts() {
+  const contacts = applications
+    .filter((app) => app.contact)
+    .map((app) => ({
+      name: app.contact,
+      company: app.company,
+      role: app.role,
+      status: app.status,
+      referral: app.referral,
+      followUpDate: app.followUpDate,
+      nextStep: app.nextStep,
+    }));
+
+  if (!contacts.length) {
+    els.contactsGrid.innerHTML = `
+      <div class="empty-state">
+        Add a contact inside an opportunity, then it will appear here.
+      </div>
+    `;
+    return;
+  }
+
+  els.contactsGrid.innerHTML = contacts.map((contact) => `
+    <article class="contact-card">
+      <strong>${escapeHtml(contact.name)}</strong>
+      <span>${escapeHtml(contact.company)} · ${escapeHtml(contact.role)}</span>
+      <div class="contact-meta">
+        <span class="pill status-${statusClass(contact.status)}">${escapeHtml(contact.status)}</span>
+        <span class="pill mode">Referral: ${escapeHtml(contact.referral)}</span>
+      </div>
+      <p>${escapeHtml(contact.nextStep || "No next step saved.")}</p>
+      <p>Follow-up: ${formatDate(contact.followUpDate)}</p>
+    </article>
+  `).join("");
+}
+
+function switchView(view) {
+  els.navItems.forEach((item) => {
+    item.classList.toggle("active", item.dataset.view === view);
+  });
+
+  els.viewPanels.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
+  });
+
+  if (view === "contacts") {
+    els.viewEyebrow.textContent = "Recruiter and referral relationship map";
+    els.viewTitle.textContent = "Contacts";
+    els.newApplicationBtn.classList.add("hidden");
+  } else {
+    els.viewEyebrow.textContent = "Software engineering opportunity pipeline";
+    els.viewTitle.textContent = "Pipeline";
+    els.newApplicationBtn.classList.remove("hidden");
+  }
+}
+
 function statusClass(status) {
   return String(status).split(" ")[0] || "Not";
 }
@@ -370,3 +432,6 @@ els.newApplicationBtn.addEventListener("click", openNewOpportunityDialog);
 els.applicationsBody.addEventListener("click", handleTableClick);
 els.exportBtn.addEventListener("click", exportData);
 els.importFile.addEventListener("change", (event) => importData(event.target.files[0]));
+els.navItems.forEach((item) => {
+  item.addEventListener("click", () => switchView(item.dataset.view));
+});

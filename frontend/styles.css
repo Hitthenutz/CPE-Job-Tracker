@@ -164,6 +164,7 @@ label {
 }
 
 .icon-button,
+.utility-button,
 .primary-button,
 .secondary-button {
   border: 1px solid var(--line);
@@ -171,6 +172,7 @@ label {
   color: var(--ink);
   min-height: 38px;
   padding: 0 12px;
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 80ms ease;
 }
 
 .icon-button {
@@ -185,6 +187,48 @@ label {
   border-color: var(--blue);
   color: #ffffff;
   font-weight: 700;
+}
+
+.utility-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  font-weight: 800;
+}
+
+.utility-button span {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: var(--blue-soft);
+}
+
+.icon-button:hover,
+.utility-button:hover,
+.primary-button:hover,
+.secondary-button:hover,
+.small-button:hover,
+.nav-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.primary-button:hover {
+  background: #1d4ed8;
+}
+
+.icon-button:active,
+.utility-button:active,
+.primary-button:active,
+.secondary-button:active,
+.small-button:active,
+.nav-item:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
 }
 
 .primary-button.full {
@@ -227,6 +271,10 @@ label {
 
 .workspace {
   overflow: hidden;
+}
+
+.hidden {
+  display: none;
 }
 
 .toolbar {
@@ -383,12 +431,71 @@ tr:hover td {
   border: 1px solid var(--line);
   background: #ffffff;
   color: var(--ink);
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 80ms ease;
 }
 
 .empty-state {
   padding: 42px 16px;
   color: var(--muted);
   text-align: center;
+}
+
+.contacts-workspace {
+  padding: 18px;
+}
+
+.contacts-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.contacts-header h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.contacts-header p {
+  max-width: 440px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.contacts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.contact-card {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  padding: 14px;
+}
+
+.contact-card strong {
+  display: block;
+  font-size: 16px;
+}
+
+.contact-card span,
+.contact-card p {
+  color: var(--muted);
+}
+
+.contact-card p {
+  margin: 10px 0 0;
+}
+
+.contact-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
 }
 
 form {

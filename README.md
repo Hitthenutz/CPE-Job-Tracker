@@ -18,6 +18,8 @@ The frontend calls the backend API at `/api/applications`. The backend validates
 - Dashboard metrics for total, active, interviews, offers, and due-soon follow-ups
 - Search and filters for status, priority, and work mode
 - Add/edit modal flow with confirm-and-save behavior
+- Contacts tab generated from recruiter/referral names stored on opportunities
+- Labeled import/export controls for moving pipeline data
 - MongoDB persistence through a Node backend
 - Secure input validation for enum values, dates, field lengths, and URLs
 - Security headers including CSP, frame blocking, no-sniff, and referrer policy
