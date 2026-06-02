@@ -7,7 +7,9 @@ let database;
 async function connectDb() {
   if (database) return database;
 
-  client = new MongoClient(config.mongodbUri);
+  client = new MongoClient(config.mongodbUri, {
+    tlsAllowInvalidCertificates: config.tlsAllowInvalidCertificates,
+  });
   await client.connect();
   database = client.db(config.dbName);
   await ensureIndexes(database);

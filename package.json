@@ -7,7 +7,7 @@
     "start": "node backend/server.js"
   },
   "dependencies": {
-    "mongodb": "^6.16.0"
+    "mongodb": "^6.21.0"
   },
   "description": "A database-backed web app for tracking CPE internships and job applications.",
   "license": "MIT"

@@ -23,9 +23,12 @@ Create a `.env` file or set these environment variables:
 MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB=cpe_job_tracker
 PORT=5173
+MONGODB_TLS_ALLOW_INVALID_CERTS=false
 ```
 
 For MongoDB Atlas, use the Atlas connection string as `MONGODB_URI`.
+If your local machine has a broken Node certificate store, you can set
+`MONGODB_TLS_ALLOW_INVALID_CERTS=true` for local development only.
 
 ```bash
 npm run dev
