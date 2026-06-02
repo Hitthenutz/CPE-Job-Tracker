@@ -278,7 +278,6 @@ function handleEmailIntake(event) {
   const parsed = parseOpportunityEmail(emailText);
   clearForm();
   fillOpportunityForm(parsed);
-  fields.notes.value = buildEmailNote(emailText, parsed);
   closeEmailDialog();
   els.applicationDialog.showModal();
   fields.company.focus();
@@ -306,8 +305,8 @@ function fillOpportunityForm(parsed) {
 function parseOpportunityEmail(rawText) {
   const text = rawText.replace(/\r/g, "");
   const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
-  const subject = findHeaderValue(lines, "subject");
-  const from = findHeaderValue(lines, "from");
+  const subject = findHeaderValue(lines, "subject") || inferSubjectLine(lines);
+  const from = findHeaderValue(lines, "from") || inferFromLine(lines);
   const link = firstMatch(text, /https?:\/\/[^\s<>"')]+/i);
   const contact = extractContact(from, text);
   const company = extractCompany(text, subject, from);
@@ -332,7 +331,7 @@ function parseOpportunityEmail(rawText) {
     contact,
     referral: "No",
     nextStep: inferNextStep(status, deadline, interviewDate),
-    followUpDate: interviewDate || deadline || defaultFollowUpDate(),
+    followUpDate: inferFollowUpDate(status, deadline, interviewDate),
     compensation,
   };
 }
@@ -343,12 +342,30 @@ function findHeaderValue(lines, key) {
   return line ? line.slice(prefix.length).trim() : "";
 }
 
+function inferSubjectLine(lines) {
+  return lines.find((line) => /application|interview|offer|assessment|position|role|intern|engineer/i.test(line)) || "";
+}
+
+function inferFromLine(lines) {
+  return lines.find((line) => /<[^>]+@[^>]+>|^[^@<>\n]+@[^@<>\n]+$/.test(line)) || "";
+}
+
 function firstMatch(text, regex) {
   const match = text.match(regex);
   return match ? match[0].replace(/[.,;]+$/, "") : "";
 }
 
 function extractContact(from, text) {
+  const signatureLine = text
+    .split("\n")
+    .map((line) => line.trim())
+    .reverse()
+    .find((line) => /(talent acquisition|recruiting|recruitment|hiring).{0,30}team/i.test(line));
+  if (signatureLine) return signatureLine;
+
+  const talentTeam = firstMatch(text, /([A-Z][A-Za-z0-9 .&-]{2,80}(?:Talent Acquisition|Hiring|Recruiting|Recruitment)[A-Za-z0-9 .&-]{0,40}Team)/);
+  if (talentTeam) return talentTeam.trim();
+
   if (from) {
     const name = from.replace(/<[^>]+>/g, "").replace(/["']/g, "").trim();
     if (name && !name.includes("@")) return name;
@@ -358,17 +375,23 @@ function extractContact(from, text) {
 }
 
 function extractCompany(text, subject, from) {
+  const atCompany = `${subject}\n${text}`.match(/\bat\s+([A-Z][A-Za-z0-9 &-]{1,50})(?=\.|,|\s|$)/);
+  if (atCompany) return cleanCompanyName(atCompany[1]);
+
+  const llcCompany = text.match(/\b([A-Z][A-Za-z0-9 .&-]{1,60}\s(?:LLC|Inc|Group|Corporation|Corp))\b/);
+  if (llcCompany) return cleanCompanyName(llcCompany[1]);
+
   const explicit = firstMatch(text, /(?:company|employer|team)\s*:\s*([A-Z][A-Za-z0-9 .&-]{1,60})/i);
-  if (explicit) return explicit.replace(/^[^:]+:\s*/, "").trim();
+  if (explicit) return cleanCompanyName(explicit.replace(/^[^:]+:\s*/, ""));
 
   const subjectCompany = subject.match(/\b(?:at|with)\s+([A-Z][A-Za-z0-9 .&-]{1,50})/);
-  if (subjectCompany) return subjectCompany[1].trim();
+  if (subjectCompany) return cleanCompanyName(subjectCompany[1]);
 
   const domain = (from.match(/@([A-Za-z0-9.-]+)/) || [])[1];
   if (domain) {
     const firstPart = domain.split(".")[0];
     if (!["gmail", "outlook", "yahoo", "hotmail", "icloud"].includes(firstPart.toLowerCase())) {
-      return titleCase(firstPart.replace(/[-_]/g, " "));
+      return cleanCompanyName(titleCase(firstPart.replace(/[-_]/g, " ")));
     }
   }
 
@@ -376,6 +399,12 @@ function extractCompany(text, subject, from) {
 }
 
 function extractRole(text, subject) {
+  const subjectRole = subject.match(/application\s*[–-]\s*(.+?)(?:\s+-\s+\d|\s+-\s+[A-Z][a-z]+,\s[A-Z]{2}|$)/i);
+  if (subjectRole) return cleanRole(subjectRole[1]);
+
+  const applicationRole = `${subject}\n${text}`.match(/(?:process for|application[\s\S]{0,20}[-–]\s*|position[:\s]+)([A-Za-z0-9 /+,&().-]{4,100}?(?:intern|engineer|developer|co-op|coop|analyst|specialist)(?:\s*\([^)]*\))?)/i);
+  if (applicationRole) return cleanRole(applicationRole[1]);
+
   const explicit = firstMatch(text, /(?:position|role|job title|opening)\s*:\s*([A-Za-z0-9 /+,&().-]{2,90})/i);
   if (explicit) return explicit.replace(/^[^:]+:\s*/, "").trim();
 
@@ -386,7 +415,7 @@ function extractRole(text, subject) {
 
   for (const pattern of rolePatterns) {
     const match = `${subject}\n${text}`.match(pattern);
-    if (match) return titleCase((match[1] || match[0]).trim());
+    if (match) return cleanRole((match[1] || match[0]).trim());
   }
 
   return "";
@@ -394,11 +423,11 @@ function extractRole(text, subject) {
 
 function inferStatus(text) {
   const lower = text.toLowerCase();
+  if (lower.includes("not be considering you") || lower.includes("will not be considering") || lower.includes("not moving forward") || lower.includes("not selected") || lower.includes("unfortunately") || lower.includes("rejected") || lower.includes("declined") || lower.includes("denied")) return "Rejected";
   if (lower.includes("offer")) return "Offer";
   if (lower.includes("final round")) return "Final Round";
   if (lower.includes("interview") || lower.includes("schedule a call")) return "Interview";
   if (lower.includes("online assessment") || lower.includes("coding assessment") || lower.includes("oa")) return "OA";
-  if (lower.includes("not selected") || lower.includes("unfortunately") || lower.includes("rejected")) return "Rejected";
   if (lower.includes("received your application") || lower.includes("application confirmation") || lower.includes("thank you for applying")) return "Applied";
   return "Not Started";
 }
@@ -432,9 +461,12 @@ function inferNextStep(status, deadline, interviewDate) {
   if (interviewDate) return "Prepare for interview and confirm schedule.";
   if (status === "OA") return "Complete assessment before the deadline.";
   if (deadline) return "Complete required action before deadline.";
-  if (status === "Applied") return "Track confirmation and follow up if there is no response.";
-  if (status === "Rejected") return "Archive or note feedback.";
-  return "Review parsed details and decide next action.";
+  return "";
+}
+
+function inferFollowUpDate(status, deadline, interviewDate) {
+  if (status === "Rejected" || status === "Ghosted" || status === "Withdrawn") return "";
+  return interviewDate || deadline || "";
 }
 
 function extractDateNear(text, keywords) {
@@ -453,7 +485,7 @@ function extractDateNear(text, keywords) {
 function extractLocation(text) {
   const explicit = firstMatch(text, /(?:location|office)\s*:\s*([A-Za-z .,-]{2,80})/i);
   if (explicit) return explicit.replace(/^[^:]+:\s*/, "").trim();
-  const cityState = firstMatch(text, /\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)?,\s[A-Z]{2}\b/);
+  const cityState = firstMatch(text, /\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)?,\s[A-Z]{2}(?:\s\d{5})?\b/);
   return cityState;
 }
 
@@ -469,12 +501,6 @@ function normalizeDate(value) {
   return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
 }
 
-function defaultFollowUpDate() {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  return date.toISOString().slice(0, 10);
-}
-
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -483,13 +509,22 @@ function titleCase(value) {
   return value.toLowerCase().replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
 }
 
-function buildEmailNote(emailText, parsed) {
-  const found = Object.entries(parsed)
-    .filter(([, value]) => value)
-    .map(([key]) => key)
-    .join(", ");
-  const excerpt = emailText.slice(0, 1200);
-  return `Parsed from email. Fields detected: ${found || "none"}.\n\nOriginal email excerpt:\n${excerpt}`;
+function cleanRole(value) {
+  return value
+    .replace(/\s+-\s+\d.*$/, "")
+    .replace(/\s+at\s+[A-Z][A-Za-z0-9 &-]{1,50}.*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanCompanyName(value) {
+  return value
+    .replace(/\..*$/, "")
+    .replace(/\bTalent Acquisition Team\b/i, "")
+    .replace(/\bHiring Team\b/i, "")
+    .replace(/\bRecruiting Team\b/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function formPayload() {
