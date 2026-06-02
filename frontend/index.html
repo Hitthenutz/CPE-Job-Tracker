@@ -34,10 +34,10 @@
         </div>
         <div class="actions">
           <button class="icon-button" type="button" id="exportBtn" title="Export data" aria-label="Export data">
-            <span aria-hidden="true">⇩</span>
+            <span aria-hidden="true">↓</span>
           </button>
           <label class="icon-button" for="importFile" title="Import data" aria-label="Import data">
-            <span aria-hidden="true">⇧</span>
+            <span aria-hidden="true">↑</span>
           </label>
           <input id="importFile" type="file" accept="application/json" hidden>
           <button class="primary-button" type="button" id="newApplicationBtn">Add Opportunity</button>
@@ -114,14 +114,14 @@
       </section>
     </main>
 
-    <aside class="detail-panel">
+    <dialog class="opportunity-dialog" id="applicationDialog">
       <form id="applicationForm">
         <div class="panel-header">
           <div>
             <p class="eyebrow">Opportunity detail</p>
             <h3 id="formTitle">Add opportunity</h3>
           </div>
-          <button class="icon-button" type="button" id="clearFormBtn" title="Clear form" aria-label="Clear form">×</button>
+          <button class="icon-button" type="button" id="closeDialogBtn" title="Close" aria-label="Close">×</button>
         </div>
 
         <input type="hidden" id="applicationId">
@@ -151,9 +151,14 @@
           <label>Compensation<input id="compensation"></label>
         </div>
         <label>Notes<textarea id="notes" rows="4"></textarea></label>
-        <button class="primary-button full" type="submit">Save Opportunity</button>
+        <div class="form-actions">
+          <button class="secondary-button" type="button" id="cancelDialogBtn">Cancel</button>
+          <button class="primary-button" type="submit" id="submitOpportunityBtn">Confirm & Save</button>
+        </div>
       </form>
-    </aside>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
   <script src="app.js"></script>

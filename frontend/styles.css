@@ -42,7 +42,7 @@ button {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 240px minmax(720px, 1fr) 360px;
+  grid-template-columns: 240px minmax(720px, 1fr);
 }
 
 .sidebar {
@@ -164,7 +164,8 @@ label {
 }
 
 .icon-button,
-.primary-button {
+.primary-button,
+.secondary-button {
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--ink);
@@ -191,6 +192,11 @@ label {
   height: 42px;
 }
 
+.secondary-button {
+  background: #ffffff;
+  font-weight: 700;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(120px, 1fr));
@@ -199,8 +205,7 @@ label {
 }
 
 .metric,
-.workspace,
-.detail-panel {
+.workspace {
   background: var(--panel);
   border: 1px solid var(--line);
   box-shadow: 0 10px 24px rgba(21, 32, 51, 0.06);
@@ -386,17 +391,23 @@ tr:hover td {
   text-align: center;
 }
 
-.detail-panel {
-  border-top: 0;
-  border-bottom: 0;
-  border-right: 0;
-  padding: 22px;
-  overflow: auto;
-}
-
 form {
   display: grid;
   gap: 14px;
+}
+
+.opportunity-dialog {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.opportunity-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.56);
 }
 
 .panel-header {
@@ -411,6 +422,34 @@ form {
   gap: 10px;
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 10;
+  max-width: 320px;
+  padding: 12px 14px;
+  background: #152033;
+  color: #ffffff;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 textarea {
   resize: vertical;
 }
@@ -418,12 +457,6 @@ textarea {
 @media (max-width: 1180px) {
   .app-shell {
     grid-template-columns: 200px 1fr;
-  }
-
-  .detail-panel {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--line);
-    border-left: 0;
   }
 }
 
@@ -447,5 +480,9 @@ textarea {
 
   .main {
     padding: 16px;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
   }
 }

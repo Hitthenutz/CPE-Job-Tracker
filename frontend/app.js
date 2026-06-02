@@ -18,10 +18,14 @@ const els = {
   modeFilter: document.querySelector("#modeFilter"),
   form: document.querySelector("#applicationForm"),
   formTitle: document.querySelector("#formTitle"),
-  clearFormBtn: document.querySelector("#clearFormBtn"),
+  applicationDialog: document.querySelector("#applicationDialog"),
+  closeDialogBtn: document.querySelector("#closeDialogBtn"),
+  cancelDialogBtn: document.querySelector("#cancelDialogBtn"),
   newApplicationBtn: document.querySelector("#newApplicationBtn"),
+  submitOpportunityBtn: document.querySelector("#submitOpportunityBtn"),
   exportBtn: document.querySelector("#exportBtn"),
   importFile: document.querySelector("#importFile"),
+  toast: document.querySelector("#toast"),
   totalCount: document.querySelector("#totalCount"),
   activeCount: document.querySelector("#activeCount"),
   interviewCount: document.querySelector("#interviewCount"),
@@ -171,6 +175,17 @@ function clearForm() {
   fields.mode.value = "Hybrid";
   fields.referral.value = "No";
   els.formTitle.textContent = "Add opportunity";
+  els.submitOpportunityBtn.textContent = "Confirm & Save";
+}
+
+function openNewOpportunityDialog() {
+  clearForm();
+  els.applicationDialog.showModal();
+  fields.company.focus();
+}
+
+function closeOpportunityDialog() {
+  els.applicationDialog.close();
 }
 
 function editApplication(id) {
@@ -195,6 +210,9 @@ function editApplication(id) {
   fields.compensation.value = app.compensation || "";
   fields.notes.value = app.notes || "";
   els.formTitle.textContent = "Edit opportunity";
+  els.submitOpportunityBtn.textContent = "Confirm Update";
+  els.applicationDialog.showModal();
+  fields.company.focus();
 }
 
 async function handleSubmit(event) {
@@ -205,14 +223,21 @@ async function handleSubmit(event) {
   const method = id ? "PUT" : "POST";
 
   try {
+    els.submitOpportunityBtn.disabled = true;
+    els.submitOpportunityBtn.textContent = id ? "Updating..." : "Posting...";
     await requestJson(url, {
       method,
       body: JSON.stringify(next),
     });
     clearForm();
+    closeOpportunityDialog();
     await loadApplications();
+    showToast(id ? "Opportunity updated." : "Opportunity posted to pipeline.");
   } catch (error) {
     alert(error.message);
+  } finally {
+    els.submitOpportunityBtn.disabled = false;
+    els.submitOpportunityBtn.textContent = fields.applicationId.value ? "Confirm Update" : "Confirm & Save";
   }
 }
 
@@ -281,11 +306,21 @@ async function handleTableClick(event) {
   if (deleteId) {
     await requestJson(`${API_URL}/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
     await loadApplications();
+    showToast("Opportunity deleted.");
   }
   if (openId) {
     const app = applications.find((item) => item.id === openId);
     if (app?.link) window.open(app.link, "_blank", "noopener");
   }
+}
+
+function showToast(message) {
+  els.toast.textContent = message;
+  els.toast.classList.add("visible");
+  window.clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = window.setTimeout(() => {
+    els.toast.classList.remove("visible");
+  }, 2400);
 }
 
 function statusClass(status) {
@@ -329,8 +364,9 @@ els.statusFilter.addEventListener("change", renderApplications);
 els.priorityFilter.addEventListener("change", renderApplications);
 els.modeFilter.addEventListener("change", renderApplications);
 els.form.addEventListener("submit", handleSubmit);
-els.clearFormBtn.addEventListener("click", clearForm);
-els.newApplicationBtn.addEventListener("click", clearForm);
+els.closeDialogBtn.addEventListener("click", closeOpportunityDialog);
+els.cancelDialogBtn.addEventListener("click", closeOpportunityDialog);
+els.newApplicationBtn.addEventListener("click", openNewOpportunityDialog);
 els.applicationsBody.addEventListener("click", handleTableClick);
 els.exportBtn.addEventListener("click", exportData);
 els.importFile.addEventListener("change", (event) => importData(event.target.files[0]));
