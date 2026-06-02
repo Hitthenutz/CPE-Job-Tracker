@@ -1,4 +1,4 @@
-const STORAGE_KEY = "cpe-career-tracker-v1";
+const API_URL = "/api/applications";
 
 const options = {
   type: ["Internship", "Co-op", "New Grad", "Part-time", "Research"],
@@ -8,48 +8,7 @@ const options = {
   referral: ["Yes", "No", "Needed"],
 };
 
-const sampleApplications = [
-  {
-    id: crypto.randomUUID(),
-    company: "NVIDIA",
-    role: "Computer Engineering Intern",
-    type: "Internship",
-    priority: "High",
-    status: "Applied",
-    dateApplied: "2026-06-02",
-    deadline: "2026-06-20",
-    location: "Santa Clara, CA",
-    mode: "Hybrid",
-    link: "https://careers.nvidia.com",
-    contact: "Recruiter",
-    referral: "Needed",
-    nextStep: "Ask alumni for referral",
-    followUpDate: "2026-06-09",
-    compensation: "$30/hr",
-    notes: "Embedded systems and hardware track.",
-  },
-  {
-    id: crypto.randomUUID(),
-    company: "AMD",
-    role: "Silicon Validation Co-op",
-    type: "Co-op",
-    priority: "Medium",
-    status: "Interview",
-    dateApplied: "2026-05-28",
-    deadline: "",
-    location: "Austin, TX",
-    mode: "Office",
-    link: "https://careers.amd.com",
-    contact: "",
-    referral: "No",
-    nextStep: "Prepare verification stories",
-    followUpDate: "2026-06-05",
-    compensation: "",
-    notes: "Review digital logic and lab projects.",
-  },
-];
-
-let applications = loadApplications();
+let applications = [];
 
 const els = {
   applicationsBody: document.querySelector("#applicationsBody"),
@@ -80,20 +39,23 @@ const fields = [
   return acc;
 }, {});
 
-function loadApplications() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return sampleApplications;
-
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : sampleApplications;
-  } catch {
-    return sampleApplications;
-  }
+async function loadApplications() {
+  setTableMessage("Loading applications...");
+  applications = await requestJson(API_URL);
+  render();
 }
 
-function saveApplications() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Request failed");
+  }
+  return payload;
 }
 
 function fillOptions(select, values, includeAll = false) {
@@ -136,7 +98,7 @@ function renderApplications() {
   const visible = getFilteredApplications();
 
   if (!visible.length) {
-    els.applicationsBody.innerHTML = `<tr><td colspan="9" class="empty-state">No applications match this view.</td></tr>`;
+    setTableMessage("No applications match this view.");
     return;
   }
 
@@ -165,6 +127,10 @@ function renderApplications() {
       </td>
     </tr>
   `).join("");
+}
+
+function setTableMessage(message) {
+  els.applicationsBody.innerHTML = `<tr><td colspan="9" class="empty-state">${escapeHtml(message)}</td></tr>`;
 }
 
 function renderMetrics() {
@@ -231,11 +197,27 @@ function editApplication(id) {
   els.formTitle.textContent = "Edit application";
 }
 
-function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault();
-  const id = fields.applicationId.value || crypto.randomUUID();
-  const next = {
-    id,
+  const id = fields.applicationId.value;
+  const next = formPayload();
+  const url = id ? `${API_URL}/${encodeURIComponent(id)}` : API_URL;
+  const method = id ? "PUT" : "POST";
+
+  try {
+    await requestJson(url, {
+      method,
+      body: JSON.stringify(next),
+    });
+    clearForm();
+    await loadApplications();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function formPayload() {
+  return {
     company: fields.company.value.trim(),
     role: fields.role.value.trim(),
     type: fields.type.value,
@@ -253,17 +235,6 @@ function handleSubmit(event) {
     compensation: fields.compensation.value.trim(),
     notes: fields.notes.value.trim(),
   };
-
-  const existingIndex = applications.findIndex((app) => app.id === id);
-  if (existingIndex >= 0) {
-    applications[existingIndex] = next;
-  } else {
-    applications.unshift(next);
-  }
-
-  saveApplications();
-  clearForm();
-  render();
 }
 
 function exportData() {
@@ -276,17 +247,21 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
-function importData(file) {
+async function importData(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const parsed = JSON.parse(reader.result);
       if (!Array.isArray(parsed)) throw new Error("Expected an array");
-      applications = parsed.map((app) => ({ ...app, id: app.id || crypto.randomUUID() }));
-      saveApplications();
+      for (const app of parsed) {
+        await requestJson(API_URL, {
+          method: "POST",
+          body: JSON.stringify(app),
+        });
+      }
       clearForm();
-      render();
+      await loadApplications();
     } catch {
       alert("That file does not look like tracker JSON.");
     }
@@ -294,7 +269,7 @@ function importData(file) {
   reader.readAsText(file);
 }
 
-function handleTableClick(event) {
+async function handleTableClick(event) {
   const button = event.target.closest("button");
   if (!button) return;
 
@@ -304,9 +279,8 @@ function handleTableClick(event) {
 
   if (editId) editApplication(editId);
   if (deleteId) {
-    applications = applications.filter((app) => app.id !== deleteId);
-    saveApplications();
-    render();
+    await requestJson(`${API_URL}/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+    await loadApplications();
   }
   if (openId) {
     const app = applications.find((item) => item.id === openId);
@@ -319,7 +293,7 @@ function statusClass(status) {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "-";
   const date = parseDate(value);
   return Number.isNaN(date.getTime())
     ? value
@@ -346,7 +320,9 @@ function escapeHtml(value) {
 
 setupOptions();
 clearForm();
-render();
+loadApplications().catch((error) => {
+  setTableMessage(`Could not load applications: ${error.message}`);
+});
 
 els.searchInput.addEventListener("input", renderApplications);
 els.statusFilter.addEventListener("change", renderApplications);
