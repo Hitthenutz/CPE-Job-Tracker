@@ -1,0 +1,10 @@
+{
+  "name": "cpe-career-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "description": "A local web app for tracking CPE internships and job applications.",
+  "license": "MIT"
+}

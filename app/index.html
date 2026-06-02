@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CPE Career Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CT</div>
+        <div>
+          <h1>CPE Tracker</h1>
+          <p>Career pipeline</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" type="button" data-view="applications">Applications</button>
+        <button class="nav-item" type="button" data-view="contacts">Contacts</button>
+      </nav>
+      <div class="sidebar-card">
+        <span class="label">Next follow-up</span>
+        <strong id="nextFollowUp">None due</strong>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Computer engineering career search</p>
+          <h2>Applications</h2>
+        </div>
+        <div class="actions">
+          <button class="icon-button" type="button" id="exportBtn" title="Export data" aria-label="Export data">
+            <span aria-hidden="true">⇩</span>
+          </button>
+          <label class="icon-button" for="importFile" title="Import data" aria-label="Import data">
+            <span aria-hidden="true">⇧</span>
+          </label>
+          <input id="importFile" type="file" accept="application/json" hidden>
+          <button class="primary-button" type="button" id="newApplicationBtn">Add Application</button>
+        </div>
+      </header>
+
+      <section class="stats-grid" aria-label="Application metrics">
+        <article class="metric">
+          <span>Total</span>
+          <strong id="totalCount">0</strong>
+        </article>
+        <article class="metric">
+          <span>Active</span>
+          <strong id="activeCount">0</strong>
+        </article>
+        <article class="metric">
+          <span>Interviews</span>
+          <strong id="interviewCount">0</strong>
+        </article>
+        <article class="metric">
+          <span>Offers</span>
+          <strong id="offerCount">0</strong>
+        </article>
+        <article class="metric urgent">
+          <span>Due Soon</span>
+          <strong id="dueSoonCount">0</strong>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <div class="toolbar">
+          <label class="search-box">
+            <span>Search</span>
+            <input id="searchInput" type="search" placeholder="Company, role, location...">
+          </label>
+          <label>
+            <span>Status</span>
+            <select id="statusFilter">
+              <option value="All">All</option>
+            </select>
+          </label>
+          <label>
+            <span>Priority</span>
+            <select id="priorityFilter">
+              <option value="All">All</option>
+            </select>
+          </label>
+          <label>
+            <span>Mode</span>
+            <select id="modeFilter">
+              <option value="All">All</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Mode</th>
+                <th>Applied</th>
+                <th>Follow-up</th>
+                <th>Next Step</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="applicationsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <aside class="detail-panel">
+      <form id="applicationForm">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Application detail</p>
+            <h3 id="formTitle">Add application</h3>
+          </div>
+          <button class="icon-button" type="button" id="clearFormBtn" title="Clear form" aria-label="Clear form">×</button>
+        </div>
+
+        <input type="hidden" id="applicationId">
+        <label>Company<input id="company" required></label>
+        <label>Role<input id="role" required></label>
+        <div class="two-col">
+          <label>Type<select id="type"></select></label>
+          <label>Priority<select id="priority"></select></label>
+        </div>
+        <div class="two-col">
+          <label>Status<select id="status"></select></label>
+          <label>Remote/Hybrid<select id="mode"></select></label>
+        </div>
+        <div class="two-col">
+          <label>Date Applied<input id="dateApplied" type="date"></label>
+          <label>Deadline<input id="deadline" type="date"></label>
+        </div>
+        <label>Location<input id="location"></label>
+        <label>Link<input id="link" type="url" placeholder="https://"></label>
+        <div class="two-col">
+          <label>Contact<input id="contact"></label>
+          <label>Referral<select id="referral"></select></label>
+        </div>
+        <label>Next Step<input id="nextStep"></label>
+        <div class="two-col">
+          <label>Follow-up Date<input id="followUpDate" type="date"></label>
+          <label>Compensation<input id="compensation"></label>
+        </div>
+        <label>Notes<textarea id="notes" rows="4"></textarea></label>
+        <button class="primary-button full" type="submit">Save Application</button>
+      </form>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
