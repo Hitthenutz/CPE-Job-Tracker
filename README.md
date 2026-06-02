@@ -18,6 +18,7 @@ The frontend calls the backend API at `/api/applications`. The backend validates
 - Dashboard metrics for total, active, interviews, offers, and due-soon follow-ups
 - Search and filters for status, priority, and work mode
 - Add/edit modal flow with confirm-and-save behavior
+- Email Intake parser that turns pasted recruiter/application emails into prefilled opportunities
 - Contacts tab generated from recruiter/referral names stored on opportunities
 - Labeled import/export controls for moving pipeline data
 - MongoDB persistence through a Node backend
@@ -102,6 +103,18 @@ The server binds to `0.0.0.0` automatically in production unless `HOST` is set.
 - `POST /api/applications`
 - `PUT /api/applications/:id`
 - `DELETE /api/applications/:id`
+
+## Email Intake
+
+Use `Email Intake` when you receive a recruiter email, interview invite, application confirmation, or job-posting email.
+
+1. Click `Email Intake`.
+2. Paste the email text.
+3. Click `Parse & Review`.
+4. Review the prefilled opportunity modal.
+5. Click `Confirm & Save` to post it to MongoDB.
+
+The parser attempts to infer company, position, contact, link, status, deadline, location, compensation, next step, and follow-up date. It does not connect to your inbox yet; direct Gmail/Outlook scanning should be added later with OAuth and explicit permissions.
 
 ## Security Notes
 

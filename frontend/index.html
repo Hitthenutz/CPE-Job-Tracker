@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DevPipeline</title>
-  <link rel="stylesheet" href="styles.css?v=contacts-ui">
+  <link rel="stylesheet" href="styles.css?v=email-intake">
 </head>
 <body>
   <div class="app-shell">
@@ -42,6 +42,10 @@
             Import
           </label>
           <input id="importFile" type="file" accept="application/json" hidden>
+          <button class="utility-button" type="button" id="emailIntakeBtn">
+            <span aria-hidden="true">@</span>
+            Email Intake
+          </button>
           <button class="primary-button" type="button" id="newApplicationBtn">Add Opportunity</button>
         </div>
       </header>
@@ -171,9 +175,32 @@
       </form>
     </dialog>
 
+    <dialog class="email-dialog" id="emailDialog">
+      <form id="emailIntakeForm">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Email intake</p>
+            <h3>Parse opportunity email</h3>
+          </div>
+          <button class="icon-button" type="button" id="closeEmailDialogBtn" title="Close" aria-label="Close">×</button>
+        </div>
+        <label>
+          Email text
+          <textarea id="emailText" rows="12" placeholder="Paste a recruiter email, application confirmation, interview invite, or job posting email..."></textarea>
+        </label>
+        <div class="parser-hints">
+          <span>Extracts company, position, contact, links, dates, status, location, and next step when possible.</span>
+        </div>
+        <div class="form-actions">
+          <button class="secondary-button" type="button" id="clearEmailBtn">Clear</button>
+          <button class="primary-button" type="submit">Parse & Review</button>
+        </div>
+      </form>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=contacts-ui"></script>
+  <script src="app.js?v=email-intake"></script>
 </body>
 </html>
