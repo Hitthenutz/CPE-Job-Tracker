@@ -3,12 +3,20 @@ const path = require("node:path");
 
 loadEnvFile();
 
+const nodeEnv = process.env.NODE_ENV || "development";
+
 const config = {
   mongodbUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017",
   dbName: process.env.MONGODB_DB || "cpe_job_tracker",
   port: Number(process.env.PORT || 5173),
+  host: process.env.HOST || (nodeEnv === "production" ? "0.0.0.0" : "127.0.0.1"),
+  nodeEnv,
   tlsAllowInvalidCertificates: process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true",
 };
+
+if (config.nodeEnv === "production" && config.tlsAllowInvalidCertificates) {
+  throw new Error("MONGODB_TLS_ALLOW_INVALID_CERTS must not be true in production.");
+}
 
 function loadEnvFile() {
   const envPath = path.join(__dirname, "..", ".env");

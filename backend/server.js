@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { config } = require("./config");
 const { closeDb, connectDb } = require("./db");
+const { HttpError } = require("./errors");
 const {
   createApplication,
   deleteApplication,
@@ -22,7 +23,24 @@ const types = {
 
 const server = http.createServer(async (req, res) => {
   try {
+    applySecurityHeaders(res);
     const url = new URL(req.url, `http://${req.headers.host}`);
+
+    if (!["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"].includes(req.method)) {
+      sendJson(res, 405, { error: "Method not allowed" });
+      return;
+    }
+
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    if (url.pathname === "/health") {
+      sendJson(res, 200, { ok: true });
+      return;
+    }
 
     if (url.pathname.startsWith("/api/")) {
       await handleApi(req, res, url);
@@ -31,7 +49,14 @@ const server = http.createServer(async (req, res) => {
 
     serveStatic(url, res);
   } catch (error) {
-    sendJson(res, 500, { error: error.message || "Internal server error" });
+    const status = error instanceof HttpError ? error.status : 500;
+    const message = status >= 500 && config.nodeEnv === "production"
+      ? "Internal server error"
+      : error.message || "Internal server error";
+    if (status >= 500) {
+      console.error(error);
+    }
+    sendJson(res, status, { error: message });
   }
 });
 
@@ -80,12 +105,21 @@ function serveStatic(url, res) {
       return;
     }
 
-    res.writeHead(200, { "Content-Type": types[path.extname(filePath)] || "application/octet-stream" });
+    const headers = {
+      "Content-Type": types[path.extname(filePath)] || "application/octet-stream",
+      "Cache-Control": path.extname(filePath) === ".html" ? "no-store" : "public, max-age=3600",
+    };
+    res.writeHead(200, headers);
     res.end(data);
   });
 }
 
 function readJson(req) {
+  const contentType = req.headers["content-type"] || "";
+  if (!contentType.includes("application/json")) {
+    throw new HttpError(415, "Expected application/json.");
+  }
+
   return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", (chunk) => {
@@ -111,17 +145,32 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function applySecurityHeaders(res) {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  if (config.nodeEnv === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+}
+
 async function start() {
   await connectDb();
-  server.listen(config.port, "127.0.0.1", () => {
-    console.log(`CPE Career Tracker running at http://127.0.0.1:${config.port}`);
+  server.listen(config.port, config.host, () => {
+    console.log(`CPE Career Tracker running at http://${config.host}:${config.port}`);
   });
 }
 
-process.on("SIGINT", async () => {
+async function shutdown() {
   await closeDb();
   process.exit(0);
-});
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 start().catch((error) => {
   console.error(`Failed to start server: ${error.message}`);

@@ -8,6 +8,8 @@ async function connectDb() {
   if (database) return database;
 
   client = new MongoClient(config.mongodbUri, {
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 10000,
     tlsAllowInvalidCertificates: config.tlsAllowInvalidCertificates,
   });
   await client.connect();
