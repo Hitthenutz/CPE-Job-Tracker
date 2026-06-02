@@ -9,6 +9,8 @@ const options = {
 };
 
 let applications = [];
+let formSnapshot = "";
+let isSavingOpportunity = false;
 
 const els = {
   applicationsBody: document.querySelector("#applicationsBody"),
@@ -188,6 +190,7 @@ function clearForm() {
   fields.referral.value = "No";
   els.formTitle.textContent = "Add opportunity";
   els.submitOpportunityBtn.textContent = "Confirm & Save";
+  setFormSnapshot();
 }
 
 function openNewOpportunityDialog() {
@@ -201,17 +204,19 @@ function closeOpportunityDialog() {
 }
 
 function openEmailDialog() {
+  clearEmailDialog(false);
   els.emailDialog.showModal();
   els.emailText.focus();
 }
 
 function closeEmailDialog() {
+  clearEmailDialog(false);
   els.emailDialog.close();
 }
 
-function clearEmailDialog() {
+function clearEmailDialog(shouldFocus = true) {
   els.emailText.value = "";
-  els.emailText.focus();
+  if (shouldFocus) els.emailText.focus();
 }
 
 function editApplication(id) {
@@ -237,18 +242,29 @@ function editApplication(id) {
   fields.notes.value = app.notes || "";
   els.formTitle.textContent = "Edit opportunity";
   els.submitOpportunityBtn.textContent = "Confirm Update";
+  setFormSnapshot();
   els.applicationDialog.showModal();
   fields.company.focus();
 }
 
 async function handleSubmit(event) {
   event.preventDefault();
+  await saveOpportunity();
+}
+
+async function saveOpportunity({ closeAfterSave = true, quiet = false } = {}) {
+  if (isSavingOpportunity) return false;
   const id = fields.applicationId.value;
   const next = formPayload();
+  if (!next.company || !next.role) {
+    if (!quiet) alert("Company and position are required.");
+    return false;
+  }
   const url = id ? `${API_URL}/${encodeURIComponent(id)}` : API_URL;
   const method = id ? "PUT" : "POST";
 
   try {
+    isSavingOpportunity = true;
     els.submitOpportunityBtn.disabled = true;
     els.submitOpportunityBtn.textContent = id ? "Updating..." : "Posting...";
     await requestJson(url, {
@@ -256,12 +272,15 @@ async function handleSubmit(event) {
       body: JSON.stringify(next),
     });
     clearForm();
-    closeOpportunityDialog();
+    if (closeAfterSave) closeOpportunityDialog();
     await loadApplications();
     showToast(id ? "Opportunity updated." : "Opportunity posted to pipeline.");
+    return true;
   } catch (error) {
-    alert(error.message);
+    if (!quiet) alert(error.message);
+    return false;
   } finally {
+    isSavingOpportunity = false;
     els.submitOpportunityBtn.disabled = false;
     els.submitOpportunityBtn.textContent = fields.applicationId.value ? "Confirm Update" : "Confirm & Save";
   }
@@ -282,6 +301,41 @@ function handleEmailIntake(event) {
   els.applicationDialog.showModal();
   fields.company.focus();
   showToast("Email parsed. Review before saving.");
+}
+
+async function handleOpportunityBackdropClick(event) {
+  if (event.target !== els.applicationDialog) return;
+  if (!isFormDirty()) {
+    closeOpportunityDialog();
+    return;
+  }
+
+  const payload = formPayload();
+  if (!payload.company && !payload.role) {
+    clearForm();
+    closeOpportunityDialog();
+    return;
+  }
+
+  if (!payload.company || !payload.role) {
+    showToast("Add company and position before autosaving.");
+    return;
+  }
+
+  await saveOpportunity({ quiet: true });
+}
+
+function handleEmailBackdropClick(event) {
+  if (event.target !== els.emailDialog) return;
+  closeEmailDialog();
+}
+
+function setFormSnapshot() {
+  formSnapshot = JSON.stringify(formPayload());
+}
+
+function isFormDirty() {
+  return JSON.stringify(formPayload()) !== formSnapshot;
 }
 
 function fillOpportunityForm(parsed) {
@@ -399,10 +453,10 @@ function extractCompany(text, subject, from) {
 }
 
 function extractRole(text, subject) {
-  const subjectRole = subject.match(/application\s*[–-]\s*(.+?)(?:\s+-\s+\d|\s+-\s+[A-Z][a-z]+,\s[A-Z]{2}|$)/i);
+  const subjectRole = subject.match(/application\s*(?:-|\u2013)\s*(.+?)(?:\s+-\s+\d|\s+-\s+[A-Z][a-z]+,\s[A-Z]{2}|$)/i);
   if (subjectRole) return cleanRole(subjectRole[1]);
 
-  const applicationRole = `${subject}\n${text}`.match(/(?:process for|application[\s\S]{0,20}[-–]\s*|position[:\s]+)([A-Za-z0-9 /+,&().-]{4,100}?(?:intern|engineer|developer|co-op|coop|analyst|specialist)(?:\s*\([^)]*\))?)/i);
+  const applicationRole = `${subject}\n${text}`.match(/(?:process for|application[\s\S]{0,20}(?:-|\u2013)\s*|position[:\s]+)([A-Za-z0-9 /+,&().-]{4,100}?(?:intern|engineer|developer|co-op|coop|analyst|specialist)(?:\s*\([^)]*\))?)/i);
   if (applicationRole) return cleanRole(applicationRole[1]);
 
   const explicit = firstMatch(text, /(?:position|role|job title|opening)\s*:\s*([A-Za-z0-9 /+,&().-]{2,90})/i);
@@ -708,11 +762,13 @@ els.modeFilter.addEventListener("change", renderApplications);
 els.form.addEventListener("submit", handleSubmit);
 els.closeDialogBtn.addEventListener("click", closeOpportunityDialog);
 els.cancelDialogBtn.addEventListener("click", closeOpportunityDialog);
+els.applicationDialog.addEventListener("click", handleOpportunityBackdropClick);
 els.newApplicationBtn.addEventListener("click", openNewOpportunityDialog);
 els.emailIntakeBtn.addEventListener("click", openEmailDialog);
 els.emailIntakeForm.addEventListener("submit", handleEmailIntake);
 els.closeEmailDialogBtn.addEventListener("click", closeEmailDialog);
 els.clearEmailBtn.addEventListener("click", clearEmailDialog);
+els.emailDialog.addEventListener("click", handleEmailBackdropClick);
 els.applicationsBody.addEventListener("click", handleTableClick);
 els.exportBtn.addEventListener("click", exportData);
 els.importFile.addEventListener("change", (event) => importData(event.target.files[0]));

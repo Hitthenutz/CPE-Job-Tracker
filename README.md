@@ -19,6 +19,8 @@ The frontend calls the backend API at `/api/applications`. The backend validates
 - Search and filters for status, priority, and work mode
 - Add/edit modal flow with confirm-and-save behavior
 - Email Intake parser that turns pasted recruiter/application emails into prefilled opportunities
+- Click outside a changed opportunity modal to autosave valid edits
+- Email Intake resets after each parse/close so the next email starts clean
 - Contacts tab generated from recruiter/referral names stored on opportunities
 - Labeled import/export controls for moving pipeline data
 - MongoDB persistence through a Node backend
