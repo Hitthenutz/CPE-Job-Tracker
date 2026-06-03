@@ -23,7 +23,8 @@ const types = {
 exports.handler = async function handler(event) {
   try {
     const method = event.httpMethod || "GET";
-    const requestPath = event.path || new URL(event.rawUrl || "/", "https://devpipeline.local").pathname;
+    const rawPath = event.path || new URL(event.rawUrl || "/", "https://devpipeline.local").pathname;
+    const requestPath = normalizePath(rawPath);
     const query = event.rawQuery ? `?${event.rawQuery}` : "";
     const url = new URL(`${requestPath}${query}`, "https://devpipeline.local");
 
@@ -207,4 +208,11 @@ function header(event, name) {
   const headers = event.headers || {};
   const key = Object.keys(headers).find((candidate) => candidate.toLowerCase() === name);
   return key ? String(headers[key]) : "";
+}
+
+function normalizePath(pathname) {
+  const functionPrefix = "/.netlify/functions/app";
+  if (!pathname.startsWith(functionPrefix)) return pathname;
+  const stripped = pathname.slice(functionPrefix.length);
+  return stripped || "/";
 }

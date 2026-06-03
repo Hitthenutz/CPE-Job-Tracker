@@ -1,4 +1,6 @@
 const API_URL = "/api/applications";
+const NETLIFY_FUNCTION_PREFIX = "/.netlify/functions/app";
+const AUTH_STORAGE_KEY = "devpipeline_api_password";
 
 const options = {
   type: ["Internship", "Co-op", "New Grad", "Part-time", "Research"],
@@ -63,10 +65,23 @@ async function loadApplications() {
 }
 
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  return requestJsonWithFallback(url, options, true);
+}
+
+async function requestJsonWithFallback(url, options = {}, canFallback) {
+  let response;
+  try {
+    response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers: requestHeaders(options.headers),
+    });
+  } catch (error) {
+    if (canFallback && url.startsWith("/api/")) {
+      return requestJsonWithFallback(`${NETLIFY_FUNCTION_PREFIX}${url}`, options, false);
+    }
+    throw error;
+  }
 
   const text = await response.text();
   let payload = {};
@@ -76,10 +91,42 @@ async function requestJson(url, options = {}) {
     payload = { error: text || response.statusText || "Request failed" };
   }
 
+  if (response.status === 401) {
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    const password = prompt("Enter your DevPipeline site password");
+    if (!password) {
+      throw new Error("Password is required to save changes.");
+    }
+    sessionStorage.setItem(AUTH_STORAGE_KEY, password);
+    return requestJsonWithFallback(url, options, canFallback);
+  }
+
+  if (canFallback && url.startsWith("/api/") && shouldTryNetlifyFunction(response, payload)) {
+    return requestJsonWithFallback(`${NETLIFY_FUNCTION_PREFIX}${url}`, options, false);
+  }
+
   if (!response.ok) {
     throw new Error(payload.error || "Request failed");
   }
   return payload;
+}
+
+function requestHeaders(extraHeaders = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...extraHeaders,
+  };
+  const password = sessionStorage.getItem(AUTH_STORAGE_KEY);
+  if (password) {
+    headers.Authorization = `Basic ${btoa(`devpipeline:${password}`)}`;
+  }
+  return headers;
+}
+
+function shouldTryNetlifyFunction(response, payload) {
+  if (response.status === 404 || response.status === 405) return true;
+  if (!response.ok && !response.headers.get("content-type")?.includes("application/json")) return true;
+  return payload.error === "Route not found";
 }
 
 function fillOptions(select, values, includeAll = false) {
