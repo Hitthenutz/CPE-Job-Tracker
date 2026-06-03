@@ -84,27 +84,21 @@ http://127.0.0.1:5173
 
 Recommended free stack:
 
-- App hosting: Koyeb free web service
+- App hosting: Vercel Hobby
 - Database: MongoDB Atlas free cluster
 - Code hosting: GitHub
 
-Koyeb's docs list one free web service per organization. The free service is enough for this tracker because the app is a small Node server that serves the frontend and talks to MongoDB.
+Vercel's Hobby plan is free for personal projects and does not have a billing cycle. This repo includes `vercel.json` and `api/index.js` so Vercel can host the frontend and API as a serverless app.
 
-### Deploy On Koyeb
+### Deploy On Vercel
 
-1. Go to [Koyeb](https://www.koyeb.com/).
-2. Create an account and connect GitHub.
-3. Create a new Web Service.
-4. Pick this repository: `Hitthenutz/CPE-Job-Tracker`.
-5. Pick branch: `codex/cpe-career-tracker`.
-6. Choose the free instance type.
-7. Set the run command:
-
-```bash
-npm start
-```
-
-8. Add these environment variables:
+1. Go to [Vercel](https://vercel.com/).
+2. Sign up with GitHub.
+3. Import this repository: `Hitthenutz/CPE-Job-Tracker`.
+4. Pick branch: `codex/cpe-career-tracker`.
+5. Keep the project on the `Hobby` plan.
+6. Leave build settings alone unless Vercel asks. This repo uses `vercel.json`.
+7. Add these environment variables:
 
 ```bash
 NODE_ENV=production
@@ -114,17 +108,23 @@ MONGODB_TLS_ALLOW_INVALID_CERTS=false
 APP_PASSWORD=make_a_private_password_for_the_site
 ```
 
-9. Deploy.
+8. Deploy.
 
-Koyeb will give you a public URL like:
+Vercel will give you a public URL like:
 
 ```text
-https://your-service-name.koyeb.app
+https://devpipeline.vercel.app
 ```
 
 When you open the site, your browser will ask for a username and password. The username can be anything; the password must match `APP_PASSWORD`.
 
-### Free Render Option
+### Backup Free Options
+
+GitHub Pages is free and usually does not ask for billing, but it only hosts static files. That means it cannot safely use MongoDB or the backend API by itself.
+
+Koyeb and Render both document free web services, but some signup flows still ask for a payment method. If they ask you to pay or add billing, skip them and use Vercel Hobby first.
+
+### Render Option
 
 Render also documents free web services. This repo includes `render.yaml`, but make sure you choose the `Free` instance type during setup. If Render asks you to pick a paid instance, back out and choose the free web service flow instead of a paid service.
 

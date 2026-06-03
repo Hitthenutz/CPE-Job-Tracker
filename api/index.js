@@ -1,0 +1,187 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const {
+  createApplication,
+  deleteApplication,
+  listApplications,
+  updateApplication,
+} = require("../backend/applications");
+const { config } = require("../backend/config");
+const { HttpError } = require("../backend/errors");
+
+const frontendRoot = path.join(__dirname, "..", "frontend");
+
+const types = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+};
+
+module.exports = async function handler(req, res) {
+  try {
+    applySecurityHeaders(res);
+    const url = new URL(req.url, `https://${req.headers.host || "localhost"}`);
+
+    if (!["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"].includes(req.method)) {
+      sendJson(res, 405, { error: "Method not allowed" });
+      return;
+    }
+
+    if (req.method === "OPTIONS") {
+      res.statusCode = 204;
+      res.end();
+      return;
+    }
+
+    if (url.pathname === "/health" || url.pathname === "/api/health") {
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    if (!isAuthorized(req)) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="DevPipeline", charset="UTF-8"');
+      sendJson(res, 401, { error: "Authentication required" });
+      return;
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      await handleApi(req, res, url);
+      return;
+    }
+
+    serveStatic(url, res);
+  } catch (error) {
+    const status = error instanceof HttpError ? error.status : 500;
+    const message = status >= 500 && config.nodeEnv === "production"
+      ? "Internal server error"
+      : error.message || "Internal server error";
+    if (status >= 500) console.error(error);
+    sendJson(res, status, { error: message });
+  }
+};
+
+async function handleApi(req, res, url) {
+  if (url.pathname === "/api/applications" && req.method === "GET") {
+    sendJson(res, 200, await listApplications());
+    return;
+  }
+
+  if (url.pathname === "/api/applications" && req.method === "POST") {
+    sendJson(res, 201, await createApplication(await readJson(req)));
+    return;
+  }
+
+  const match = url.pathname.match(/^\/api\/applications\/([^/]+)$/);
+  if (match && req.method === "PUT") {
+    const app = await updateApplication(decodeURIComponent(match[1]), await readJson(req));
+    sendJson(res, app ? 200 : 404, app || { error: "Application not found" });
+    return;
+  }
+
+  if (match && req.method === "DELETE") {
+    const deleted = await deleteApplication(decodeURIComponent(match[1]));
+    sendJson(res, deleted ? 200 : 404, deleted ? { ok: true } : { error: "Application not found" });
+    return;
+  }
+
+  sendJson(res, 404, { error: "Route not found" });
+}
+
+function serveStatic(url, res) {
+  const pathname = url.pathname === "/" ? "/index.html" : url.pathname;
+  const safePath = path.normalize(pathname).replace(/^[/\\]+/, "").replace(/^(\.\.[/\\])+/, "");
+  const filePath = path.join(frontendRoot, safePath);
+
+  if (!filePath.startsWith(frontendRoot)) {
+    res.statusCode = 403;
+    res.end("Forbidden");
+    return;
+  }
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      fs.readFile(path.join(frontendRoot, "index.html"), (fallbackErr, fallbackData) => {
+        if (fallbackErr) {
+          res.statusCode = 404;
+          res.end("Not found");
+          return;
+        }
+        res.writeHead(200, {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+        });
+        res.end(fallbackData);
+      });
+      return;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": types[path.extname(filePath)] || "application/octet-stream",
+      "Cache-Control": path.extname(filePath) === ".html" ? "no-store" : "public, max-age=3600",
+    });
+    res.end(data);
+  });
+}
+
+function readJson(req) {
+  if (req.body && typeof req.body === "object") return req.body;
+
+  const contentType = req.headers["content-type"] || "";
+  if (!contentType.includes("application/json")) {
+    throw new HttpError(415, "Expected application/json.");
+  }
+
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 1_000_000) {
+        reject(new Error("Request body too large"));
+        req.destroy();
+      }
+    });
+    req.on("end", () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch {
+        reject(new Error("Invalid JSON"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function sendJson(res, status, payload) {
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
+  res.end(JSON.stringify(payload));
+}
+
+function applySecurityHeaders(res) {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+}
+
+function isAuthorized(req) {
+  if (!config.appPassword) return true;
+
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) return false;
+
+  let decoded = "";
+  try {
+    decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
+  } catch {
+    return false;
+  }
+
+  const separatorIndex = decoded.indexOf(":");
+  const password = separatorIndex === -1 ? "" : decoded.slice(separatorIndex + 1);
+  return password === config.appPassword;
+}
