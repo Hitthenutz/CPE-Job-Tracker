@@ -80,38 +80,57 @@ http://127.0.0.1:5173
 4. Copy the Node.js connection string.
 5. Put the connection string in `.env` as `MONGODB_URI`.
 
-## Make It A Public Website
+## Make It A Public Website For Free
 
-The easiest public deploy path is Render because this repo includes `render.yaml`.
+Recommended free stack:
 
-1. Push this repo to GitHub.
-2. Go to Render and choose `New` -> `Blueprint`.
-3. Connect your GitHub repo.
-4. Render will read `render.yaml` and create a Node web service.
-5. Add the private environment variables when Render asks:
+- App hosting: Koyeb free web service
+- Database: MongoDB Atlas free cluster
+- Code hosting: GitHub
+
+Koyeb's docs list one free web service per organization. The free service is enough for this tracker because the app is a small Node server that serves the frontend and talks to MongoDB.
+
+### Deploy On Koyeb
+
+1. Go to [Koyeb](https://www.koyeb.com/).
+2. Create an account and connect GitHub.
+3. Create a new Web Service.
+4. Pick this repository: `Hitthenutz/CPE-Job-Tracker`.
+5. Pick branch: `codex/cpe-career-tracker`.
+6. Choose the free instance type.
+7. Set the run command:
 
 ```bash
-MONGODB_URI=your_atlas_connection_string
-APP_PASSWORD=make_a_private_password_for_the_site
+npm start
 ```
 
-The checked-in `render.yaml` already sets:
+8. Add these environment variables:
 
 ```bash
 NODE_ENV=production
+MONGODB_URI=your_atlas_connection_string
 MONGODB_DB=cpe_job_tracker
 MONGODB_TLS_ALLOW_INVALID_CERTS=false
+APP_PASSWORD=make_a_private_password_for_the_site
 ```
 
-After deploy, Render gives you a public URL like:
+9. Deploy.
+
+Koyeb will give you a public URL like:
 
 ```text
-https://devpipeline.onrender.com
+https://your-service-name.koyeb.app
 ```
 
 When you open the site, your browser will ask for a username and password. The username can be anything; the password must match `APP_PASSWORD`.
 
-For Railway, Fly.io, or another Node host, use:
+### Free Render Option
+
+Render also documents free web services. This repo includes `render.yaml`, but make sure you choose the `Free` instance type during setup. If Render asks you to pick a paid instance, back out and choose the free web service flow instead of a paid service.
+
+### Other Hosts
+
+For another Node host, use:
 
 ```bash
 Build Command: npm install
