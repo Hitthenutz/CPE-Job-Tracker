@@ -22,7 +22,9 @@ const types = {
 exports.handler = async function handler(event) {
   try {
     const method = event.httpMethod || "GET";
-    const url = new URL(event.rawUrl || event.path || "/", "https://devpipeline.local");
+    const requestPath = event.path || new URL(event.rawUrl || "/", "https://devpipeline.local").pathname;
+    const query = event.rawQuery ? `?${event.rawQuery}` : "";
+    const url = new URL(`${requestPath}${query}`, "https://devpipeline.local");
 
     if (!["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"].includes(method)) {
       return json(405, { error: "Method not allowed" });

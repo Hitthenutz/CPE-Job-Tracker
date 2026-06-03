@@ -68,7 +68,14 @@ async function requestJson(url, options = {}) {
     ...options,
   });
 
-  const payload = await response.json();
+  const text = await response.text();
+  let payload = {};
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    payload = { error: text || response.statusText || "Request failed" };
+  }
+
   if (!response.ok) {
     throw new Error(payload.error || "Request failed");
   }

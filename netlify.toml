@@ -14,13 +14,16 @@
   from = "/health"
   to = "/.netlify/functions/app"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/app"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/app"
   status = 200
+  force = true
