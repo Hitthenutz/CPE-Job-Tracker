@@ -88,4 +88,9 @@ async function closeDb() {
   database = undefined;
 }
 
-module.exports = { closeDb, connectDb };
+async function pingDb() {
+  const db = await connectDb();
+  await db.command({ ping: 1 });
+}
+
+module.exports = { closeDb, connectDb, pingDb };

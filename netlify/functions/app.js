@@ -7,6 +7,7 @@ const {
   updateApplication,
 } = require("../../backend/applications");
 const { config } = require("../../backend/config");
+const { pingDb } = require("../../backend/db");
 const { HttpError } = require("../../backend/errors");
 
 const frontendRoot = path.join(__dirname, "..", "..", "frontend");
@@ -36,6 +37,10 @@ exports.handler = async function handler(event) {
 
     if (url.pathname === "/health" || url.pathname === "/api/health") {
       return json(200, { ok: true });
+    }
+
+    if (url.pathname === "/api/diagnostics") {
+      return handleDiagnostics();
     }
 
     if (!isAuthorized(event)) {
@@ -80,6 +85,32 @@ async function handleApi(event, method, url) {
   }
 
   return json(404, { error: "Route not found" });
+}
+
+async function handleDiagnostics() {
+  const result = {
+    ok: true,
+    env: {
+      nodeEnv: config.nodeEnv,
+      hasMongoUri: Boolean(config.mongodbUri),
+      hasAppPassword: Boolean(config.appPassword),
+      dbName: config.dbName,
+      tlsAllowInvalidCertificates: config.tlsAllowInvalidCertificates,
+    },
+    mongo: {
+      reachable: false,
+    },
+  };
+
+  try {
+    await pingDb();
+    result.mongo.reachable = true;
+  } catch (error) {
+    result.ok = false;
+    result.mongo.error = error.message;
+  }
+
+  return json(result.ok ? 200 : 500, result);
 }
 
 async function serveStatic(url) {
