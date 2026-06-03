@@ -84,13 +84,43 @@ http://127.0.0.1:5173
 
 Recommended free stack:
 
-- App hosting: Vercel Hobby
+- App hosting: Netlify Free
 - Database: MongoDB Atlas free cluster
 - Code hosting: GitHub
 
-Vercel's Hobby plan is free for personal projects and does not have a billing cycle. This repo includes `vercel.json` and `api/index.js` so Vercel can host the frontend and API as a serverless app.
+Netlify has advertised its Free plan as no-credit-card-required, and it supports Node functions with environment variables. This repo includes `netlify.toml` and `netlify/functions/app.js` so Netlify can host the frontend and API as one protected app.
 
-### Deploy On Vercel
+### Deploy On Netlify
+
+1. Go to [Netlify](https://www.netlify.com/).
+2. Sign up with GitHub.
+3. Add new site -> Import an existing project.
+4. Import this repository: `Hitthenutz/CPE-Job-Tracker`.
+5. Pick branch: `codex/cpe-career-tracker`.
+6. Use the settings from `netlify.toml`.
+7. Add these environment variables:
+
+```bash
+NODE_ENV=production
+MONGODB_URI=your_atlas_connection_string
+MONGODB_DB=cpe_job_tracker
+MONGODB_TLS_ALLOW_INVALID_CERTS=false
+APP_PASSWORD=make_a_private_password_for_the_site
+```
+
+8. Deploy.
+
+Netlify will give you a public URL like:
+
+```text
+https://devpipeline.netlify.app
+```
+
+When you open the site, your browser will ask for a username and password. The username can be anything; the password must match `APP_PASSWORD`.
+
+### Vercel Option
+
+This repo also includes `vercel.json` and `api/index.js` for Vercel Hobby. Use it only if signup works for you:
 
 1. Go to [Vercel](https://vercel.com/).
 2. Sign up with GitHub.
