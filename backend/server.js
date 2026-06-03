@@ -42,6 +42,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (!isAuthorized(req)) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="DevPipeline", charset="UTF-8"');
+      sendJson(res, 401, { error: "Authentication required" });
+      return;
+    }
+
     if (url.pathname.startsWith("/api/")) {
       await handleApi(req, res, url);
       return;
@@ -155,6 +161,24 @@ function applySecurityHeaders(res) {
   if (config.nodeEnv === "production") {
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
+}
+
+function isAuthorized(req) {
+  if (!config.appPassword) return true;
+
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) return false;
+
+  let decoded = "";
+  try {
+    decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
+  } catch {
+    return false;
+  }
+
+  const separatorIndex = decoded.indexOf(":");
+  const password = separatorIndex === -1 ? "" : decoded.slice(separatorIndex + 1);
+  return password === config.appPassword;
 }
 
 async function start() {

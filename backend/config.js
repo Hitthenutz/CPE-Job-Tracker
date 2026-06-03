@@ -11,11 +11,16 @@ const config = {
   port: Number(process.env.PORT || 5173),
   host: process.env.HOST || (nodeEnv === "production" ? "0.0.0.0" : "127.0.0.1"),
   nodeEnv,
+  appPassword: process.env.APP_PASSWORD || "",
   tlsAllowInvalidCertificates: process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true",
 };
 
 if (config.nodeEnv === "production" && config.tlsAllowInvalidCertificates) {
   throw new Error("MONGODB_TLS_ALLOW_INVALID_CERTS must not be true in production.");
+}
+
+if (config.nodeEnv === "production" && !config.appPassword) {
+  throw new Error("APP_PASSWORD must be set in production.");
 }
 
 function loadEnvFile() {

@@ -6,6 +6,9 @@
     "dev": "node backend/server.js",
     "start": "node backend/server.js"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "mongodb": "^6.21.0"
   },

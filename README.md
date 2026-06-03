@@ -26,6 +26,7 @@ The frontend calls the backend API at `/api/applications`. The backend validates
 - MongoDB persistence through a Node backend
 - Secure input validation for enum values, dates, field lengths, and URLs
 - Security headers including CSP, frame blocking, no-sniff, and referrer policy
+- Production password gate for hosted/public deployments
 - JSON import/export for backup or migration
 - `/health` endpoint for deployment checks
 
@@ -46,6 +47,7 @@ PORT=5173
 HOST=127.0.0.1
 NODE_ENV=development
 MONGODB_TLS_ALLOW_INVALID_CERTS=false
+APP_PASSWORD=
 ```
 
 For MongoDB Atlas, use your Atlas connection string as `MONGODB_URI`.
@@ -78,25 +80,45 @@ http://127.0.0.1:5173
 4. Copy the Node.js connection string.
 5. Put the connection string in `.env` as `MONGODB_URI`.
 
-## Deployment
+## Make It A Public Website
 
-For Render, Railway, or another Node host:
+The easiest public deploy path is Render because this repo includes `render.yaml`.
+
+1. Push this repo to GitHub.
+2. Go to Render and choose `New` -> `Blueprint`.
+3. Connect your GitHub repo.
+4. Render will read `render.yaml` and create a Node web service.
+5. Add the private environment variables when Render asks:
+
+```bash
+MONGODB_URI=your_atlas_connection_string
+APP_PASSWORD=make_a_private_password_for_the_site
+```
+
+The checked-in `render.yaml` already sets:
+
+```bash
+NODE_ENV=production
+MONGODB_DB=cpe_job_tracker
+MONGODB_TLS_ALLOW_INVALID_CERTS=false
+```
+
+After deploy, Render gives you a public URL like:
+
+```text
+https://devpipeline.onrender.com
+```
+
+When you open the site, your browser will ask for a username and password. The username can be anything; the password must match `APP_PASSWORD`.
+
+For Railway, Fly.io, or another Node host, use:
 
 ```bash
 Build Command: npm install
 Start Command: npm start
 ```
 
-Set environment variables in the host dashboard:
-
-```bash
-NODE_ENV=production
-MONGODB_URI=your_atlas_connection_string
-MONGODB_DB=cpe_job_tracker
-MONGODB_TLS_ALLOW_INVALID_CERTS=false
-```
-
-The server binds to `0.0.0.0` automatically in production unless `HOST` is set.
+Set the same environment variables listed above. The server binds to `0.0.0.0` automatically in production unless `HOST` is set.
 
 ## API
 
@@ -122,6 +144,7 @@ The parser attempts to infer company, position, contact, link, status, deadline,
 
 - Keep `.env` out of GitHub.
 - Store production secrets in your host's environment variable settings.
+- Set `APP_PASSWORD` before hosting publicly so strangers cannot edit your applications.
 - Rotate any MongoDB password that was shared in chat or committed by mistake.
 - Never set `MONGODB_TLS_ALLOW_INVALID_CERTS=true` in production.
 

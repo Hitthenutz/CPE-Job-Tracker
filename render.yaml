@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: devpipeline
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_DB
+        value: cpe_job_tracker
+      - key: MONGODB_TLS_ALLOW_INVALID_CERTS
+        value: "false"
+      - key: MONGODB_URI
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
