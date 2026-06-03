@@ -3,17 +3,26 @@ const path = require("node:path");
 
 loadEnvFile();
 
-const nodeEnv = process.env.NODE_ENV || "development";
+const isHosted = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.RENDER);
+const nodeEnv = process.env.NODE_ENV || (isHosted ? "production" : "development");
+const defaultMongoUri = "mongodb://127.0.0.1:27017";
+const mongodbUri = process.env.MONGODB_URI || defaultMongoUri;
 
 const config = {
-  mongodbUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017",
+  mongodbUri,
   dbName: process.env.MONGODB_DB || "cpe_job_tracker",
   port: Number(process.env.PORT || 5173),
   host: process.env.HOST || (nodeEnv === "production" ? "0.0.0.0" : "127.0.0.1"),
   nodeEnv,
+  isHosted,
+  hasCustomMongoUri: Boolean(process.env.MONGODB_URI),
   appPassword: process.env.APP_PASSWORD || "",
   tlsAllowInvalidCertificates: process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true",
 };
+
+if (config.isHosted && !config.hasCustomMongoUri) {
+  throw new Error("MONGODB_URI must be set in the hosting provider environment variables.");
+}
 
 if (config.nodeEnv === "production" && config.tlsAllowInvalidCertificates) {
   throw new Error("MONGODB_TLS_ALLOW_INVALID_CERTS must not be true in production.");

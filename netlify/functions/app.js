@@ -93,7 +93,8 @@ async function handleDiagnostics() {
     ok: true,
     env: {
       nodeEnv: config.nodeEnv,
-      hasMongoUri: Boolean(config.mongodbUri),
+      isHosted: config.isHosted,
+      hasMongoUri: config.hasCustomMongoUri,
       hasAppPassword: Boolean(config.appPassword),
       dbName: config.dbName,
       tlsAllowInvalidCertificates: config.tlsAllowInvalidCertificates,
